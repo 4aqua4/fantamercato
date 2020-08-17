@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Fantamercato</title>
+    <link href="/webjars/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/main.css" rel="stylesheet">
+    <script src="/webjars/jquery/jquery.min.js"></script>
+    <script src="/webjars/sockjs-client/sockjs.min.js"></script>
+    <script src="/webjars/stomp-websocket/stomp.min.js"></script>
+    <script src="/app.js"></script>
+    <script src="/webjars/bootstrap/js/bootstrap.min.js"></script>
+</head>
+<body>
+<noscript><h2 style="color: #ff0000">Seems your browser doesn't support Javascript! Websocket relies on Javascript being
+    enabled. Please enable
+    Javascript and reload this page!</h2></noscript>
+<div id="login-container" class="container">
+    <div class="row" id="loginRow" >
+        <div class="col-md-6">
+            <form class="form-inline">
+                <div class="form-group">
+                    <label for="connect">Username:</label>
+					<input type="text" id="username" class="form-control" placeholder="Your username here...">
+                    <button id="connect" class="btn btn-default" type="submit">Connect</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>    
+<div id="main-container" class="container" style="display: none">    
+    <div class="row">
+        <div class="col-md-10">
+        	<button id="disconnect" class="btn btn-default" type="submit" disabled="disabled">Disconnect</button>
+        </div>
+        <div class="col-md-2">
+        	<a id="admin-btn" class="btn btn-primary" href="#admin-container" role="button" style="display: none">Admin</a>
+        </div>
+        <!--  
+        <div class="col-md-12">
+            <table id="conversation" class="table table-striped">
+                <thead>
+                <tr>
+                    <th>Greetings</th>
+                </tr>
+                </thead>
+                <tbody id="greetings">
+                </tbody>
+            </table>
+        </div>
+        -->
+    </div>
+    <div class="row">
+        <div class="col-md-12">
+			<button id="start-btn" class="btn btn-default" style="display: none">start</button>
+    	</div>
+    </div>
+    
+    
+    <div class="row">
+        <div id="offer-div" class="col-md-8" style="display: none">
+        	<div id="players-dropdown" style="display: none">
+	        	<select id="goalkeepers-dropdown" name="P">
+				</select>
+	        	<select id="defenders-dropdown" name="D">
+				</select>
+	        	<select id="midfielders-dropdown" name="C">
+				</select>
+	        	<select id="strikers-dropdown" name="A">
+				</select>
+        	</div>
+        	<div>
+				<input id="lastPrice" type="text" hidden="true"/>
+				<input id="currPlayer" type="text" hidden="true"/>
+				<input id="currPlayerRole" type="text" hidden="true"/>
+				<h4 id="currPlayerName">...</h4>
+				<label for="price">offerta:</label>
+				<input id="price" type="text" />
+<!-- 
+	            <button id="sendMsg" class="btn btn-default">sendMsg</button>
+ -->
+	            <button id="makeOffer" class="btn btn-default" style="display: none">offri</button>
+	            <button id="quitOffer" class="btn btn-default" style="display: none">rinuncia</button>
+	            
+	            <h5 id="currOfferBy">...</h5>
+	            
+	            <label for="nextBidder">&#232; il turno di:</label>	            
+	           	<h5 id="nextBidder">...</h5>
+	            
+        	</div>
+			
+        </div>
+        <div id="offer-result-div" class="col-md-8" style="display: none">
+        
+        </div>
+        
+        <div class="col-md-1"></div>
+        <div id="myteam" class="col-md-3">
+        
+        </div>
+
+    </div>
+    
+    
+    <div class="row">
+        <div class="col-md-12">
+        	<h3>TEAMS</th3>
+        </div>
+    </div>
+    <div class="row">
+        <div id="teams" class="col-md-12">
+        	
+        </div>
+        
+    </div>
+</div>
+
+
+<!-- ADM -->
+<hr></hr>
+<div id="admin-container" class="container" style="display: none">
+    <div class="row">
+        <div class="col-md-10">
+        	<h2>Amministrazione</h2>
+		</div>
+        <div class="col-md-2">
+        	<button id="closeAdmin" class="btn btn-primary">indietro</button>
+		</div>
+	</div>
+	
+
+	<div id="admTabs" class="container">	
+		<ul class="nav nav-tabs">
+		
+
+		
+			<li class="active">
+				<a  href="#adm-teams" data-toggle="tab">Teams</a>
+			</li>
+			
+			<li class="dropdown">
+				<a class="dropdown-toggle" data-toggle="dropdown" href="#">Players
+				<span class="caret"></span></a>
+				<ul class="dropdown-menu">
+					<li><a href="#adm-GK" role="tab" data-toggle="tab">Portieri</a></li>
+					<li><a href="#adm-DF" role="tab" data-toggle="tab">Difensori</a></li>
+					<li><a href="#adm-MF" role="tab" data-toggle="tab">Centrocampisti</a></li>
+					<li><a href="#adm-FW" role="tab" data-toggle="tab">Attaccanti</a></li>
+				</ul>
+			</li>
+		</ul>
+		
+		<div class="tab-content ">
+			<div class="tab-pane active" id="adm-teams">
+				<h3>TEAMS</h3>
+				<button class="btn btn-default" onclick="importTeams();">Importa</button>
+			</div>
+			
+			<div class="tab-pane" id="adm-GK">
+			
+			</div>
+			<div class="tab-pane" id="adm-DF">
+
+			</div>
+			<div class="tab-pane" id="adm-MF">
+				
+			</div>
+			<div class="tab-pane" id="adm-FW">
+
+			</div>
+		</div>
+	</div>
+
+</div>
+<!-- ADM end -->
+
+</body>
+</html>
