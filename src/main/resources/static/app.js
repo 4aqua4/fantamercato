@@ -228,10 +228,10 @@ function fillTeams(username, tList){
 				
 userRole = entry.role;
 if(entry.role == 'A'){
-	$( "#admin-btn" ).show();
+//	$( "#admin-btn" ).show();
 	$( "#start-btn" ).show();
 }else{
-	$( "#admin-btn" ).hide();
+//	$( "#admin-btn" ).hide();
 	$( "#start-btn" ).hide();
 }
 				myBudget = entry.budget;
