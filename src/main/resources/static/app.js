@@ -222,6 +222,8 @@ function fillStrikersList(sList){
 
 //TEAMS
 function fillTeams(username, tList){
+	alert("fillTeams");
+
 	$.each(tList, function (key, entry) {	
 		let divId = "team_"+entry.username
 		if(! $('#'+divId).length){
@@ -374,8 +376,6 @@ function setTurnResult(username, content){
 }
 
 function createTurnResultDivContent(content){
-	console.log('content');
-	console.log(content);
 	var obj = $.parseJSON(content);
 
 	let divContent = '<h2>AGGIUDICATO</h2>';
@@ -473,6 +473,7 @@ console.log("myGKCount " + myGKCount + ".MAX_GK "+MAX_GK);
 console.log("myDFCount " + myDFCount + ".MAX_DF "+MAX_DF);
 console.log("myMFCount " + myMFCount + ".MAX_MF "+MAX_MF);
 console.log("myFWCount " + myFWCount + ".MAX_FW "+MAX_FW);
+alert("curRole==="+curRole+"myMFCount " + myMFCount);
 	switch (curRole) {
 	  case ROLE_GK:
 	    if(myGKCount < MAX_GK)
