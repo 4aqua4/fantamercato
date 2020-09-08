@@ -5,6 +5,8 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.security.Principal;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -20,6 +22,7 @@ import org.springframework.context.event.EventListener;
 import org.springframework.messaging.MessageHeaders;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.SendTo;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.messaging.simp.annotation.SendToUser;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.messaging.support.GenericMessage;
@@ -46,6 +49,8 @@ public class FantamercatoController {
     private static final String BASE_XLS_FILE_PATH = "D:/FANTAMERCATO_DB/importExcel/";
     //private static final String BASE_XLS_FILE_PATH = "/importFiles/";
     
+    private HashMap<String, String> sessionUsers = new HashMap<String, String>();//id_sessione - id_utente
+    
     private List<String> connectedClientId = new ArrayList<String>();
     
     //gestione turno
@@ -62,6 +67,11 @@ public class FantamercatoController {
 
     @Autowired
     private TeamRepository teamRepository;
+
+    
+    @Autowired
+    private SimpMessagingTemplate brokerMessagingTemplate;
+    
 /*    
     @MessageMapping("/fantamercato/broad")
     @SendTo("/topic/players")
@@ -98,8 +108,19 @@ logger.debug("messageType: "+message.getType());
         }else if(message.getType().equalsIgnoreCase("teamsList")) {
         	//elenco team
             ServerMessage msg = new ServerMessage();
-            msg.setType("teamsList");        
-            msg.setTeams(teamRepository.findAll());
+            msg.setType("teamsList");     
+            List<Team>allTeams = teamRepository.findAll();
+logger.debug("****************************************************");
+            for (Iterator iterator = allTeams.iterator(); iterator.hasNext();) {
+				Team team = (Team) iterator.next();
+logger.debug("...id: "+team.getUsername());
+				if(connectedClientId.contains(team.getUsername())) {
+logger.debug("è connesso");	
+					team.setStatus(1);
+				}	
+			}
+logger.debug("****************************************************");
+            msg.setTeams(allTeams);
 
             return msg;
         }else if(message.getType().equalsIgnoreCase("currentOffer")) {
@@ -198,19 +219,24 @@ logger.debug("messageType: "+message.getType());
     public void connectionEstablished(SessionConnectedEvent sce)
     {
 		MessageHeaders msgHeaders = sce.getMessage().getHeaders();
-		
-		StompHeaderAccessor sha = StompHeaderAccessor.wrap(sce.getMessage());
+//		StompHeaderAccessor sha = StompHeaderAccessor.wrap(sce.getMessage());
+logger.debug("------------------------------------");
+logger.debug(""+msgHeaders.toString());
+logger.debug("------------------------------------");
 
 		GenericMessage genericMsg = (GenericMessage) msgHeaders.get("simpConnectMessage");
 		MessageHeaders genericMsgHeaders = genericMsg.getHeaders();
 		String sessionId = (String)genericMsgHeaders.get("simpSessionId");
-		logger.debug("Connessione websocket stabilita. sessionId "+sessionId);
+logger.debug("Connessione websocket stabilita. sessionId "+sessionId);
 		
 		Map nativeHeaders = (Map)genericMsgHeaders.get("nativeHeaders"); 
 		LinkedList<String> userIdList = (LinkedList)nativeHeaders.get("userId");
 		String userId = userIdList.get(0);
-		logger.debug("userId: "+userId);
+logger.debug("userId: "+userId);
 		connectedClientId.add(userId);
+		
+		sessionUsers.put(sessionId, userId);
+		
 		if( logger.isDebugEnabled() )
 		{
 		    logger.debug("Connessione websocket stabilita. ID Utente "+userId);
@@ -224,33 +250,63 @@ logger.debug("messageType: "+message.getType());
 		if(quitTeamList == null) {
 			quitTeamList = new ArrayList<String>();
 		}
+		
+		//invio broadcast stato connessione
+	    ServerMessage msg = new ServerMessage();
+	    msg.setType("userStatusChanged");
+	    msg.setContent("{\"userId\":\""+userId+"\",\"status\":\"1\"}");
+		this.brokerMessagingTemplate.convertAndSend("/topic/all", msg);
+
     }
 
     @EventListener
     public void webSockectDisconnect(SessionDisconnectEvent sde)
     {
-        MessageHeaders msgHeaders = sde.getMessage().getHeaders();
+	    logger.debug("****DISCONNESSIONE***** ");
+	    MessageHeaders msgHeaders = sde.getMessage().getHeaders();
+logger.debug("------------------------------------");
+logger.debug(""+msgHeaders.toString());
+logger.debug("------------------------------------");
+		String sessionId = (String)msgHeaders.get("simpSessionId");
+		logger.debug("disconnessione. sessionId "+sessionId);
+
+	    
+		String userId = sessionUsers.get(sessionId);
+		logger.debug("disconnessione. userId "+userId);
+		connectedClientId.remove(userId);
+		sessionUsers.remove(sessionId);
+		
+/*	    
         Principal princ = (Principal) msgHeaders.get("simpUser");
         StompHeaderAccessor sha = StompHeaderAccessor.wrap(sde.getMessage());
         List<String> nativeHeaders = sha.getNativeHeader("userId");
+        String userId = null;
         if( nativeHeaders != null )
         {
-            String userId = nativeHeaders.get(0);
+            userId = nativeHeaders.get(0);
             connectedClientId.remove(userId);
             if( logger.isDebugEnabled() )
             {
-                logger.debug("Connessione websocket stabilita. ID Utente "+userId);
+                logger.debug("Disconnesso. ID Utente "+userId);
             }
         }
         else
         {
-            String userId = princ.getName();
+            userId = princ.getName();
             connectedClientId.remove(userId);
             if( logger.isDebugEnabled() )
             {
-                logger.debug("Connessione websocket stabilita. ID Utente "+userId);
+                logger.debug("Disconnesso. ID Utente "+userId);
             }
         }
+*/        
+		//invio broadcast stato connessione
+	    logger.debug("****userId***** "+userId);
+	    ServerMessage msg = new ServerMessage();
+	    msg.setType("userStatusChanged");
+	    msg.setContent("{\"userId\":\""+userId+"\",\"status\":\"0\"}");
+		this.brokerMessagingTemplate.convertAndSend("/topic/all", msg);
+
     }
 /*
     public List<String> getConnectedClientId()

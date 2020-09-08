@@ -100,6 +100,11 @@ function connect() {
 	        	case "endTurn":
 	        		setTurnResult(username, JSON.parse(serverMsg.body).content);
 	        		break;
+	        	case "userStatusChanged":
+console.log('username-->'+username);
+console.log(serverMsg.body);
+	        		setUserStatusChanged(username, JSON.parse(serverMsg.body).content);
+	        		break;
 	        	case "":
 	        		alert("nessuno");
 	        		break;
@@ -111,7 +116,6 @@ function connect() {
         
         sendMsg('playersList','');
         sendMsg('teamsList','');
-        
         
         
     });
@@ -244,6 +248,7 @@ if(entry.role == 'A'){
 			}else{
 				$('#teams').append('<div id="'+divId+'" class="panel panel-info col-md-3"/>');
 				$('#teams').append('<div class="col-md-1"/>');
+setConnectionStatus(divId,entry.status);
 			}
 		}
 		users[entry.username] = entry.teamname+" ("+entry.president+")";
@@ -535,6 +540,32 @@ function translateRole(role){
 	return retVal;
 
 }
+
+//ConnectionStatus
+function setUserStatusChanged(username, content){
+	//
+	console.log("--------------------------------------");
+	console.log("id-"+"team_"+username);
+	console.log(content);
+	var obj = JSON.parse(content);
+	console.log("userId="+obj.userId);
+	console.log("status="+obj.status);
+	console.log("--------------------------------------");
+	
+	setConnectionStatus("team_"+obj.userId,obj.status);
+
+}
+
+function setConnectionStatus(uId, status){
+	if(status == 1){
+		$('#'+uId).removeClass("panel-danger");	
+		$('#'+uId).addClass("panel-info");	
+	}else{
+		$('#'+uId).removeClass("panel-info");	
+		$('#'+uId).addClass("panel-danger");	
+	}
+}
+
 
 //ADMIN
 function openAdmin(){
