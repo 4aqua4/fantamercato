@@ -101,8 +101,6 @@ function connect() {
 	        		setTurnResult(username, JSON.parse(serverMsg.body).content);
 	        		break;
 	        	case "userStatusChanged":
-console.log('username-->'+username);
-console.log(serverMsg.body);
 	        		setUserStatusChanged(username, JSON.parse(serverMsg.body).content);
 	        		break;
 	        	case "":
@@ -243,7 +241,10 @@ if(entry.role == 'A'){
 				myDFCount = entry.defenders.length;
 				myMFCount = entry.midfielders.length;
 				myFWCount = entry.forwards.length;
-
+console.log("myGKCount="+myGKCount);
+console.log("myDFCount="+myDFCount);
+console.log("myMFCount="+myMFCount);
+console.log("myFWCount="+myFWCount);
 				$('#myteam').append('<div id="'+divId+'" class="panel panel-success"/>');
 			}else{
 				$('#teams').append('<div id="'+divId+'" class="panel panel-info col-md-3"/>');
@@ -468,6 +469,10 @@ function checkCountRole(){
 	var retVal = false;
 	var curRole = $("#currPlayerRole").val();
 console.log("curRole==="+curRole);
+console.log("myGKCount " + myGKCount + ".MAX_GK "+MAX_GK);
+console.log("myDFCount " + myDFCount + ".MAX_DF "+MAX_DF);
+console.log("myMFCount " + myMFCount + ".MAX_MF "+MAX_MF);
+console.log("myFWCount " + myFWCount + ".MAX_FW "+MAX_FW);
 	switch (curRole) {
 	  case ROLE_GK:
 	    if(myGKCount < MAX_GK)
@@ -479,19 +484,19 @@ console.log("curRole==="+curRole);
 		    if(myDFCount < MAX_DF)
 		    	retVal = true;
 		    else
-		    	alert('Hai gi\u00E0 '+myGKCount+' '+translateRole(ROLE_DF));
+		    	alert('Hai gi\u00E0 '+myDFCount+' '+translateRole(ROLE_DF));
 	    break;
 	  case ROLE_MF:
 		    if(myMFCount < MAX_MF)
 		    	retVal = true;
 		    else
-		    	alert('Hai gi\u00E0 '+myGKCount+' '+translateRole(ROLE_MF));
+		    	alert('Hai gi\u00E0 '+myMFCount+' '+translateRole(ROLE_MF));
 	    break;
 	  case ROLE_FW:
 		    if(myFWCount < MAX_FW)
 		    	retVal = true;
 		    else
-		    	alert('Hai gi\u00E0 '+myGKCount+' '+translateRole(ROLE_FW));
+		    	alert('Hai gi\u00E0 '+myFWCount+' '+translateRole(ROLE_FW));
 	    break;
 	  default:
 	    console.log("Spiacenti, non abbiamo " + curRole + ".");
@@ -543,17 +548,8 @@ function translateRole(role){
 
 //ConnectionStatus
 function setUserStatusChanged(username, content){
-	//
-	console.log("--------------------------------------");
-	console.log("id-"+"team_"+username);
-	console.log(content);
-	var obj = JSON.parse(content);
-	console.log("userId="+obj.userId);
-	console.log("status="+obj.status);
-	console.log("--------------------------------------");
-	
+	var obj = JSON.parse(content);	
 	setConnectionStatus("team_"+obj.userId,obj.status);
-
 }
 
 function setConnectionStatus(uId, status){
