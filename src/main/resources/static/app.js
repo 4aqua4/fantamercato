@@ -52,6 +52,8 @@ function connect() {
 */
         stompClient.subscribe('/user/queue/single', function (serverMsg) {
             //showGreeting(JSON.parse(serverMsg.body).content);
+        	alert('ricevuto single...............'+JSON.parse(serverMsg.body).type);
+
         	console.log('ricevuto single...............'+JSON.parse(serverMsg.body).type);
         	switch(JSON.parse(serverMsg.body).type){
 	        	case "playersList":
