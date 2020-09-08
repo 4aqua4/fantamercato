@@ -52,8 +52,6 @@ function connect() {
 */
         stompClient.subscribe('/user/queue/single', function (serverMsg) {
             //showGreeting(JSON.parse(serverMsg.body).content);
-        	alert('ricevuto single...............'+JSON.parse(serverMsg.body).type);
-
         	console.log('ricevuto single...............'+JSON.parse(serverMsg.body).type);
         	switch(JSON.parse(serverMsg.body).type){
 	        	case "playersList":
@@ -224,7 +222,6 @@ function fillStrikersList(sList){
 
 //TEAMS
 function fillTeams(username, tList){
-	alert("fillTeams");
 
 	$.each(tList, function (key, entry) {	
 		let divId = "team_"+entry.username
@@ -240,15 +237,6 @@ if(entry.role == 'A'){
 //	$( "#admin-btn" ).hide();
 	$( "#start-btn" ).hide();
 }
-				myBudget = entry.budget;
-				myGKCount = entry.goalkeepers.length;
-				myDFCount = entry.defenders.length;
-				myMFCount = entry.midfielders.length;
-				myFWCount = entry.forwards.length;
-console.log("myGKCount="+myGKCount);
-console.log("myDFCount="+myDFCount);
-console.log("myMFCount="+myMFCount);
-console.log("myFWCount="+myFWCount);
 				$('#myteam').append('<div id="'+divId+'" class="panel panel-success"/>');
 			}else{
 				$('#teams').append('<div id="'+divId+'" class="panel panel-info col-md-3"/>');
@@ -256,8 +244,19 @@ console.log("myFWCount="+myFWCount);
 setConnectionStatus(divId,entry.status);
 			}
 		}
+		if(entry.username == username){
+			//aggiorno budget e numero giocatori
+			myBudget = entry.budget;
+			myGKCount = entry.goalkeepers.length;
+			myDFCount = entry.defenders.length;
+			myMFCount = entry.midfielders.length;
+			myFWCount = entry.forwards.length;
+			
+		}
+
 		users[entry.username] = entry.teamname+" ("+entry.president+")";
 		$('#'+divId).html(createTeamDivContent(entry));
+		
 	});
 }
 
@@ -470,12 +469,6 @@ function checkOffer(){
 function checkCountRole(){
 	var retVal = false;
 	var curRole = $("#currPlayerRole").val();
-console.log("curRole==="+curRole);
-console.log("myGKCount " + myGKCount + ".MAX_GK "+MAX_GK);
-console.log("myDFCount " + myDFCount + ".MAX_DF "+MAX_DF);
-console.log("myMFCount " + myMFCount + ".MAX_MF "+MAX_MF);
-console.log("myFWCount " + myFWCount + ".MAX_FW "+MAX_FW);
-alert("curRole==="+curRole+"myMFCount " + myMFCount);
 	switch (curRole) {
 	  case ROLE_GK:
 	    if(myGKCount < MAX_GK)
