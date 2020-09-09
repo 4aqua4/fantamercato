@@ -319,7 +319,7 @@ function setLastOffer(username, content){
 }
 
 function clearOfferDiv(){
-	$('#lastPrice').val(0);
+	$('#lastPrice').val(-1);
 	$('#currPlayer').val('');
 	$('#currPlayerRole').val('');
 	$('#currPlayerName').text('');	
@@ -449,10 +449,18 @@ function checkOffer(){
 	var prevOfferedPrice = $('#lastPrice').val();
 	var offeredPrice = $("#price").val();
 //console.log("prevOfferedPrice="+prevOfferedPrice+" offeredPrice="+offeredPrice);
-	if(offeredPrice <= 0){
+	//per terzo portiere può essere 0
+	var curRole = $("#currPlayerRole").val();
+	if(curRole==ROLE_GK){
+		if(offeredPrice < 0){
+			alert("L'offerta dev'essere almeno 0!");
+			return false;
+		}
+	}else if(offeredPrice <= 0){
 		alert("L'offerta dev'essere maggiore di 0!");
 		return false;
-	}else if(offeredPrice <= prevOfferedPrice){
+	}
+	if(offeredPrice <= prevOfferedPrice){
 		alert("L'offerta dev'essere maggiore di quella precedente!");
 		return false;
 	}
@@ -505,7 +513,7 @@ function checkBudget(){
 	var retVal = false;
 	var offeredPrice = $("#price").val();
 	
-	var availableBudget = myBudget-minRequiredBudget();
+	var availableBudget = myBudget-minRequiredBudget()+1;//TODO:+1 solo se quello che sto comprando non è il terzo portiere
 
 	if(offeredPrice<=availableBudget){
 		retVal = true;
@@ -517,7 +525,14 @@ function checkBudget(){
 }
 
 function minRequiredBudget(){
-	return (MAX_GK - myGKCount)+(MAX_DF - myDFCount)+(MAX_MF - myMFCount)+(MAX_FW - myFWCount);
+	var gk = 0;
+	if(myGKCount > 2){
+		gk=3;
+	}else{
+		gk=myGKCount+1;
+	}
+console.log("MAX_GK="+MAX_GK+" gk="+gk+" MAX_DF="+MAX_DF+" myDFCount="+myDFCount+" MAX_MF="+MAX_MF+" myMFCount="+myMFCount +" MAX_FW="+MAX_FW+" myFWCount="+myFWCount);
+	return (MAX_GK - gk)+(MAX_DF - myDFCount)+(MAX_MF - myMFCount)+(MAX_FW - myFWCount);
 }
 
 function translateRole(role){
