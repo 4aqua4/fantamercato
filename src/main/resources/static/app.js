@@ -351,6 +351,10 @@ function setBidderTurn(username, uId){
 function setNextBidder(username, uId){
 	$('#nextBidder').text(users[uId]);	
 	if(uId == username){
+		//TODO:se non è ancora stata fatta un'offerta mostra elenco giocatori
+		if($('#lastPrice').val()<0){
+			$( "#players-dropdown" ).show();
+		}
 		$( "#makeOffer" ).show();
 		$( "#quitOffer" ).show();
 		$("#price").prop("readonly", false);
