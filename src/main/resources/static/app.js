@@ -52,18 +52,22 @@ function connect() {
 */
         stompClient.subscribe('/user/queue/single', function (serverMsg) {
             //showGreeting(JSON.parse(serverMsg.body).content);
-        	console.log('ricevuto single...............'+JSON.parse(serverMsg.body).type);
+//        	console.log('ricevuto single...............'+JSON.parse(serverMsg.body).type);
         	switch(JSON.parse(serverMsg.body).type){
 	        	case "playersList":
 	        		fillGoalkeepersList(JSON.parse(serverMsg.body).goalkeepers);
 	        		fillDefendersList(JSON.parse(serverMsg.body).defenders);
 	        		fillMidfieldersList(JSON.parse(serverMsg.body).midfielders);
 	        		fillStrikersList(JSON.parse(serverMsg.body).strikers);
+	        		
+	        		setMarketType(JSON.parse(serverMsg.body).marketType);
 	        		//if ADM
+	        		/*
 	        		fillAdmPlayersTable("adm-GK", ROLE_GK, JSON.parse(serverMsg.body).goalkeepers);
 	        		fillAdmPlayersTable("adm-DF", ROLE_DF, JSON.parse(serverMsg.body).defenders);
 	        		fillAdmPlayersTable("adm-MF", ROLE_MF, JSON.parse(serverMsg.body).midfielders);
 	        		fillAdmPlayersTable("adm-FW", ROLE_FW, JSON.parse(serverMsg.body).strikers);
+	        		*/
 	        		break;
 	        	case "teamsList":
 	        		fillTeams(username, JSON.parse(serverMsg.body).teams);
@@ -73,9 +77,11 @@ function connect() {
 	        		setLastOffer(username, JSON.parse(serverMsg.body).content);
 	        		setNextBidder(username, JSON.parse(serverMsg.body).nextBidder);
 	        		break;
+	        		/*
 	        	case "saveResult":
-	        		showSeveResult(JSON.parse(serverMsg.body).content);
+	        		showSaveResult(JSON.parse(serverMsg.body).content);
 	        		break;
+	        		*/
 	        	case "":
 	        		alert("nessuno");
 	        		break;
@@ -85,7 +91,7 @@ function connect() {
         });
         
         stompClient.subscribe('/topic/all', function (serverMsg) {
-            console.log('ricevuto broad...............'+JSON.parse(serverMsg.body).type);
+//            console.log('ricevuto broad...............'+JSON.parse(serverMsg.body).type);
         	switch(JSON.parse(serverMsg.body).type){
 	        	case "bidderTurn":
 	        		setBidderTurn(username, JSON.parse(serverMsg.body).nextBidder)
@@ -98,10 +104,16 @@ function connect() {
 	        		setNextBidder(username, JSON.parse(serverMsg.body).nextBidder);
 	        		break;
 	        	case "endTurn":
-	        		setTurnResult(username, JSON.parse(serverMsg.body).content);
+        			setTurnResult(username, JSON.parse(serverMsg.body).content, JSON.parse(serverMsg.body).marketType);
+	        		break;
+	        	case "leftPlayer":
+	        		setPostLeftPlayer(username, JSON.parse(serverMsg.body).content);
 	        		break;
 	        	case "userStatusChanged":
 	        		setUserStatusChanged(username, JSON.parse(serverMsg.body).content);
+	        		break;
+	        	case "marketTypeChanged":
+	        		setMarketType(JSON.parse(serverMsg.body).marketType);
 	        		break;
 	        	case "":
 	        		alert("nessuno");
@@ -137,7 +149,7 @@ function disconnect() {
         stompClient.disconnect();
     }
     setConnected(false);
-    console.log("Disconnected");
+//    console.log("Disconnected");
 }
 /*
 function sendName() {
@@ -233,6 +245,7 @@ userRole = entry.role;
 if(entry.role == 'A'){
 //	$( "#admin-btn" ).show();
 	$( "#start-btn" ).show();
+	$( "#market-ckb" ).show();
 }else{
 //	$( "#admin-btn" ).hide();
 	$( "#start-btn" ).hide();
@@ -272,16 +285,16 @@ function createTeamDivContent(entry){
 	divContent += '</h3>';
 	divContent += '</div>';
 	divContent += '<div class="panel-body">';
-	divContent += createRolePlayersUl(entry.goalkeepers, translateRole(ROLE_GK));
-	divContent += createRolePlayersUl(entry.defenders, translateRole(ROLE_DF));
-	divContent += createRolePlayersUl(entry.midfielders, translateRole(ROLE_MF));
-	divContent += createRolePlayersUl(entry.forwards, translateRole(ROLE_FW));
+	divContent += createRolePlayersUl(entry.goalkeepers, ROLE_GK);
+	divContent += createRolePlayersUl(entry.defenders, ROLE_DF);
+	divContent += createRolePlayersUl(entry.midfielders, ROLE_MF);
+	divContent += createRolePlayersUl(entry.forwards, ROLE_FW);
 	divContent += '</div>';
 	return divContent;
 }
 
 function createRolePlayersUl(players, role){
-	let playersRole = 	'<h5>'+role+'</h5>';
+	let playersRole = 	'<h5>'+translateRole(role)+'</h5>';
 	/*
 	if(isMy){
 		playersRole += 	'<ul id="my-'+role+'" class="list-group list-group-flush">';
@@ -291,7 +304,7 @@ function createRolePlayersUl(players, role){
 	*/
 	playersRole += 	'<ul class="list-group list-group-flush">';
 	$.each(players, function (key, entry) {
-		playersRole += '<li class="list-group-item">'+entry.name+'('+entry.realTeam+')';
+		playersRole += '<li class="list-group-item"><button class="grp-'+entry.role+'" onclick="leavePlayer(\''+entry.id+'\', \''+role+'\')">lascia</button>'+entry.name+'('+entry.realTeam+')';
 		playersRole += '<span class="badge">'+entry.value+'</span>';
 		playersRole += '</li>';
 		
@@ -314,7 +327,7 @@ function setLastOffer(username, content){
 		$('#currOfferBy').text(users[obj['offerBy']]);	
 	}catch (e) {
 		// TODO: handle exception
-		console.log('eccezione gestita LastOffer...');
+//		console.log('eccezione gestita LastOffer...');
 	}	
 }
 
@@ -365,9 +378,9 @@ function setNextBidder(username, uId){
 	}
 }
 
-function setTurnResult(username, content){
+function setTurnResult(username, content, marketType){
 	//operazioni di fine turno
-	if(userRole == 'A'){
+	if(userRole == 'A' && marketType != 'M'){
 		$( "#start-btn" ).show();
 	}
 	
@@ -375,9 +388,51 @@ function setTurnResult(username, content){
 	$( "#offer-result-div" ).html(createTurnResultDivContent(content));
 	$( "#offer-result-div" ).show();
 	
+	if(marketType != 'M'){
+	    sendMsg('playersList','');
+	    sendMsg('teamsList','');		
+	}
+
+	if(marketType == 'M')
+		setPlayerListToLeave(username, content);	        		
+
+}
+
+function setPostLeftPlayer(username, content){
+	//operazioni di fine turno
+	if(userRole == 'A'){
+		$( "#start-btn" ).show();
+	}
+	var obj = $.parseJSON(content);
+
+	let appendContent = '<div>';
+	appendContent += '<br/>...e lascia ';
+	appendContent += '<b>'+obj['name']+'</b>';
+	appendContent += '</div>';
+
+	$( "#offer-div" ).hide();
+	$( "#offer-result-div" ).append(appendContent);
+	$( "#offer-result-div" ).show();
+	
     sendMsg('playersList','');
     sendMsg('teamsList','');
 
+}
+
+function setPlayerListToLeave(username, content){
+	//div scelta giocatore da lasciare
+	var obj = $.parseJSON(content);
+	var playRole = obj['playerRole'];
+
+	if(obj['offerBy'] == username){
+		$('#myteam .grp-'+playRole).show();
+	}
+
+}
+
+function leavePlayer(playerId, role){
+	msgContent = JSON.stringify({'playerId': playerId, 'role': role});
+	broadcastMsg("leavePlayer", msgContent);	
 }
 
 function createTurnResultDivContent(content){
@@ -414,6 +469,13 @@ function quitOffer(){
 	broadcastMsg("quitOffer", msgContent);
 }
 
+function changeMarketType(type){
+	msgContent = "M";
+	if(type){
+		msgContent = "I";
+	}
+	broadcastMsg("changeMarketType", msgContent);
+}
 
 $(function () {
 	
@@ -437,14 +499,22 @@ $(function () {
     */
     $("select").change(function() { choosePlayer(this); });
     //ADMIN
+    /*
     $( "#admin-btn" ).click(function() { openAdmin(); });
     $( "#closeAdmin" ).click(function() { closeAdmin(); });
+    */
     /*
     $( "#saveGKs" ).click(function() { savePlayers(ROLE_GK); });
     $( "#saveDFs" ).click(function() { savePlayers(ROLE_DF); });
     $( "#saveMFs" ).click(function() { savePlayers(ROLE_MF); });
     $( "#saveFWs" ).click(function() { savePlayers(ROLE_FW); });
     */
+    
+    $( "#market-ckb" ).change(function() { 
+    	var isCkd =$( "#market-ckb").is(":checked");
+    	changeMarketType(isCkd);
+    });
+    
 
 });
 
@@ -535,7 +605,7 @@ function minRequiredBudget(){
 	}else{
 		gk=myGKCount+1;
 	}
-console.log("MAX_GK="+MAX_GK+" gk="+gk+" MAX_DF="+MAX_DF+" myDFCount="+myDFCount+" MAX_MF="+MAX_MF+" myMFCount="+myMFCount +" MAX_FW="+MAX_FW+" myFWCount="+myFWCount);
+//console.log("MAX_GK="+MAX_GK+" gk="+gk+" MAX_DF="+MAX_DF+" myDFCount="+myDFCount+" MAX_MF="+MAX_MF+" myMFCount="+myMFCount +" MAX_FW="+MAX_FW+" myFWCount="+myFWCount);
 	return (MAX_GK - gk)+(MAX_DF - myDFCount)+(MAX_MF - myMFCount)+(MAX_FW - myFWCount);
 }
 
@@ -577,8 +647,20 @@ function setConnectionStatus(uId, status){
 	}
 }
 
+//marketTYpe
+function setMarketType(mType){
+	if(mType=='M'){
+		$('#pgHeaderRow').css('background-color', '#def1fa');
+		$('#market-spn').text('stagione in corso');
+		
+	}else{
+		$('#pgHeaderRow').css('background-color', '#f2dada');
+		$('#market-spn').text('inizio stagione');
+	}
+}
 
 //ADMIN
+/*
 function openAdmin(){
 	$( "#main-container" ).hide();
 	$( "#admin-container" ).show();
@@ -625,7 +707,7 @@ function fillAdmPlayersTable(divId, role, plyList){
 }
 
 function importPlayers(role){
-	console.log("role:::"+role);
+//	console.log("role:::"+role);
 	sendMsg('importPlayers',role);	
 }
 
@@ -633,7 +715,13 @@ function importTeams(){
 	sendMsg('importTeams');	
 }
 
-function showSeveResult(res){
+function showSaveResult(res){
 	alert(res);
 }
-
+*/
+/*
+function test(){
+//	console.log($('#myteam .grp-D'));
+	$('#myteam .grp-D').show();
+}
+*/

@@ -28,12 +28,19 @@
     </div>
 </div>    
 <div id="main-container" class="container" style="display: none">    
-    <div class="row">
+    <div id="pgHeaderRow" class="row">
         <div class="col-md-10">
         	<button id="disconnect" class="btn btn-default" type="submit" disabled="disabled">Disconnect</button>
         </div>
         <div class="col-md-2">
+        <!-- 
         	<a id="admin-btn" class="btn btn-primary" href="#admin-container" role="button" style="display: none">Admin</a>
+        -->
+        	<label class="bs-switch">
+        		<input id="market-ckb" type="checkbox" style="display: none" checked>
+        		<span id="market-spn" class="slider">...wait</span>
+        	</label>
+        	
         </div>
         <!--  
         <div class="col-md-12">
@@ -116,6 +123,7 @@
 
 
 <!-- ADM -->
+<!-- 
 <hr></hr>
 <div id="admin-container" class="container" style="display: none">
     <div class="row">
@@ -171,6 +179,7 @@
 	</div>
 
 </div>
+-->
 <!-- ADM end -->
 
 </body>

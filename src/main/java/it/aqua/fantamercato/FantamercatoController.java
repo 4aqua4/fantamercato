@@ -36,6 +36,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import it.aqua.fantamercato.messages.ClientMessage;
 import it.aqua.fantamercato.messages.OfferMessage;
+import it.aqua.fantamercato.messages.PlayerMessage;
 import it.aqua.fantamercato.messages.ServerMessage;
 import it.aqua.fantamercato.persistance.models.Player;
 import it.aqua.fantamercato.persistance.models.Team;
@@ -53,7 +54,20 @@ public class FantamercatoController {
     
     private List<String> connectedClientId = new ArrayList<String>();
     
-    //gestione turno
+    //gestione tipo mercato I=iniziale M=campionato in corso
+	private String marketType;
+
+    
+    public String getMarketType() {
+		return marketType;
+	}
+
+	public void setMarketType(String marketType) {
+		this.marketType = marketType;
+	}
+
+
+	//gestione turno
     private ArrayList<String> orderedTeamList; //lista team ordinati
     private int currentIdx = 0; //utente corrente nel turno
     private String lastBidder;	//utlimo offerente
@@ -104,22 +118,24 @@ logger.debug("messageType: "+message.getType());
             msg.setMidfielders(playerRepository.findByRole("C"));
             msg.setStrikers(playerRepository.findByRole("A"));
 
+        	msg.setMarketType(getMarketType());
+
             return msg;
         }else if(message.getType().equalsIgnoreCase("teamsList")) {
         	//elenco team
             ServerMessage msg = new ServerMessage();
             msg.setType("teamsList");     
             List<Team>allTeams = teamRepository.findAll();
-logger.debug("****************************************************");
+//logger.debug("****************************************************");
             for (Iterator iterator = allTeams.iterator(); iterator.hasNext();) {
 				Team team = (Team) iterator.next();
-logger.debug("...id: "+team.getUsername());
+//logger.debug("...id: "+team.getUsername());
 				if(connectedClientId.contains(team.getUsername())) {
-logger.debug("è connesso");	
+//logger.debug("è connesso");	
 					team.setStatus(1);
 				}	
 			}
-logger.debug("****************************************************");
+//logger.debug("****************************************************");
             msg.setTeams(allTeams);
 
             return msg;
@@ -131,6 +147,7 @@ logger.debug("****************************************************");
             msg.setContent(lastOffer);
 
             return msg;
+            /*
         }else if(message.getType().equalsIgnoreCase("importPlayers")) {
         	//ADMIN
         	int svd = mapPlayersExcelDatatoDB(message.getContent());
@@ -145,6 +162,7 @@ logger.debug("****************************************************");
             msg.setType("saveResult");        
         	msg.setContent("saved "+svd+" teams");
             return msg;
+            */
         }else {
         	return null;
         }
@@ -155,7 +173,7 @@ logger.debug("****************************************************");
     @MessageMapping("/fantamercato/broad")
     @SendTo("/topic/all")
     public ServerMessage messageToBroad(ClientMessage message) throws Exception {
-logger.debug("messageType: "+message.getType());
+//logger.debug("messageType: "+message.getType());
 		if(message.getType().equalsIgnoreCase("bidderTurn")) {
 			//settaggi nuovo turno
 			setupStartTurn();
@@ -200,6 +218,10 @@ logger.debug("messageType: "+message.getType());
 				//setta messaggio fine turno
                 msg.setType("endTurn");
                 msg.setContent(lastOffer);
+                
+                //gestione tipo mercato
+                msg.setMarketType(this.getMarketType());
+
             }else {
             	//continua il turno
             	//setta messaggio offerente ritirato
@@ -207,7 +229,28 @@ logger.debug("messageType: "+message.getType());
             	msg.setNextBidder(nextBidder);
             }
             return msg;
-        }else {
+        }
+//da
+		//gestione tipo mercato
+        else if(message.getType().equalsIgnoreCase("changeMarketType")) {
+//        	logger.debug("-message.getContent()-----"+message.getContent());
+        	setMarketType(message.getContent());
+            ServerMessage msg = new ServerMessage();
+            msg.setType("marketTypeChanged");
+        	msg.setMarketType(getMarketType());
+            return msg;
+        }
+		//leavePlayer
+        else if(message.getType().equalsIgnoreCase("leavePlayer")) {
+        	Player leftPlayer = removePlayerFromTeam(message.getUsername(), message.getContent());
+            ServerMessage msg = new ServerMessage();
+            String msgContent = "{\"name\":\""+leftPlayer.getName()+"("+leftPlayer.getRealTeam()+")\"}";
+            msg.setType("leftPlayer");
+            msg.setContent(msgContent);
+            return msg;
+        }
+//a
+        else {
         	return null;
         }
     }
@@ -220,10 +263,11 @@ logger.debug("messageType: "+message.getType());
     {
 		MessageHeaders msgHeaders = sce.getMessage().getHeaders();
 //		StompHeaderAccessor sha = StompHeaderAccessor.wrap(sce.getMessage());
+		/*
 logger.debug("------------------------------------");
 logger.debug(""+msgHeaders.toString());
 logger.debug("------------------------------------");
-
+*/
 		GenericMessage genericMsg = (GenericMessage) msgHeaders.get("simpConnectMessage");
 		MessageHeaders genericMsgHeaders = genericMsg.getHeaders();
 		String sessionId = (String)genericMsgHeaders.get("simpSessionId");
@@ -264,9 +308,11 @@ logger.debug("userId: "+userId);
     {
 	    logger.debug("****DISCONNESSIONE***** ");
 	    MessageHeaders msgHeaders = sde.getMessage().getHeaders();
+	    /*
 logger.debug("------------------------------------");
 logger.debug(""+msgHeaders.toString());
 logger.debug("------------------------------------");
+*/
 		String sessionId = (String)msgHeaders.get("simpSessionId");
 		logger.debug("disconnessione. sessionId "+sessionId);
 
@@ -301,7 +347,7 @@ logger.debug("------------------------------------");
         }
 */        
 		//invio broadcast stato connessione
-	    logger.debug("****userId***** "+userId);
+//	    logger.debug("****userId***** "+userId);
 	    ServerMessage msg = new ServerMessage();
 	    msg.setType("userStatusChanged");
 	    msg.setContent("{\"userId\":\""+userId+"\",\"status\":\"0\"}");
@@ -364,7 +410,84 @@ logger.debug("------------------------------------");
     	return currentUserInTurn;
     }
 
+    
+    private Player findPlayerInList(List<Player> playerList, String playerId) {
+    	Player ret = null;
+    	for (Player player : playerList) {
+//    	    logger.debug("---player.getId()---> "+player.getId());
+			if(playerId.equalsIgnoreCase(player.getId())) {
+				ret = player;
+			}
+		}
+    	return ret;
+    }
+    
     //aggiorna team su DB
+    private Player removePlayerFromTeam(String teamUsername, String msgContent) {
+    	ObjectMapper mapper = new ObjectMapper();
+    	Player playerToRemove = null;
+    	try {
+    		
+    		PlayerMessage obj = mapper.readValue(msgContent, PlayerMessage.class);
+	    	String playerId = obj.getPlayerId();
+	    	String playerRole = obj.getRole();
+	    		    	
+	    	Team team = teamRepository.findByUsername(teamUsername);
+    		//rimuove player da team (dalla giusta lista)
+//    	    logger.debug("---playerRole---> "+playerRole);
+    		switch (playerRole) {
+			case "P":
+				playerToRemove = findPlayerInList(team.getGoalkeepers(), playerId);
+				team.getGoalkeepers().remove(playerToRemove);
+				break;
+			case "D":
+				playerToRemove = findPlayerInList(team.getDefenders(), playerId);
+				team.getDefenders().remove(playerToRemove);
+				break;
+			case "C":
+				playerToRemove = findPlayerInList(team.getMidfielders(), playerId);
+				team.getMidfielders().remove(playerToRemove);
+				break;
+			case "A":
+				playerToRemove = findPlayerInList(team.getForwards(), playerId);
+				team.getForwards().remove(playerToRemove);
+				break;
+
+			default:
+				break;
+			}
+	    	
+/*    		
+    	    logger.debug("****team.getBudget()***** "+team.getBudget());
+    	    logger.debug("****playerToRemove***** "+playerToRemove);
+    	    logger.debug("****playerToRemove.getValue()***** "+playerToRemove.getValue());
+*/
+    		//aggiorna budget del team
+    		int newBuget = team.getBudget() + playerToRemove.getValue();
+    		team.setBudget(newBuget);
+    		//salva modifica del team
+    		teamRepository.save(team);
+	    	
+	    	//rimette nella lista giocatori svincolati
+    		playerRepository.insert(playerToRemove);
+    		
+    		//playerRepository.save(player);//TODO:togliere lasciato solo per non dover ricaricare elenco giocatori su DB
+	    	
+		} catch (JsonParseException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (JsonMappingException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+    	
+		return playerToRemove;
+		
+    }
+    
     private void assignPlayerToTeam() {
     	ObjectMapper mapper = new ObjectMapper();
     	try {

@@ -14,6 +14,7 @@ public class ServerMessage {
 	private List<Team> teams;
 	private String nextBidder;
 	private String content;
+	private String marketType;//gestione tipo mercato I=iniziale M=campionato in corso
 
 
 	public ServerMessage() {
@@ -83,7 +84,15 @@ public class ServerMessage {
 		this.content = content;
 	}
 
-	
+//gestione tipo mercato I=iniziale M=campionato in corso	
+	public String getMarketType() {
+		return marketType;
+	}
+
+	public void setMarketType(String marketType) {
+		this.marketType = marketType;
+	}
+
 	
 	
 }
