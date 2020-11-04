@@ -547,22 +547,6 @@ logger.debug("------------------------------------");
     
     //EXCEL
     /*
-    @PostMapping("/import")
-    public void mapReapExcelDatatoDB(@RequestParam("file") MultipartFile reapExcelDataFile) throws IOException {
-    	
-    	List<Player> playersList = new ArrayList<Player>();
-    	XSSFWorkbook workbook = new XSSFWorkbook(reapExcelDataFile.getInputStream());
-        XSSFSheet worksheet = workbook.getSheetAt(0);
-        
-        for(int i=1;i<worksheet.getPhysicalNumberOfRows() ;i++) {
-        	XSSFRow row = worksheet.getRow(i);
-        	logger.debug("ID:"+row.getCell(0)+" Ruolo:"+row.getCell(i)+" Nme:"+row.getCell(2)+" Squadra:"+row.getCell(3));
-        	//Player tmpPlayer = new Player();
-        	
-        }
-    }
-    */
-    
     public int mapPlayersExcelDatatoDB(String role) throws IOException {
     	if(role == null) {
     		return mapPlayersExcelDatatoDB();
@@ -678,6 +662,6 @@ logger.debug("------------------------------------");
         currentTeam.setForwards(fwList);
 
     }
-
+*/
     
 }

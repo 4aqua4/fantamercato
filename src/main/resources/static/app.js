@@ -2,6 +2,8 @@ var stompClient = null;
 var username = null;
 var userRole = null;
 
+var marketType = null;
+
 var myBudget = 0;
 var myGKCount = 0;
 var myDFCount = 0;
@@ -538,8 +540,8 @@ function checkOffer(){
 		alert("L'offerta dev'essere maggiore di quella precedente!");
 		return false;
 	}
-	
-	if(!checkCountRole()){
+	console.log('marketType--->>'+marketType);
+	if((marketType != 'M') && !checkCountRole()){
 		return false;
 	}
 	if(!checkBudget()){
@@ -649,6 +651,7 @@ function setConnectionStatus(uId, status){
 
 //marketTYpe
 function setMarketType(mType){
+	marketType = mType;
 	if(mType=='M'){
 		$('#pgHeaderRow').css('background-color', '#def1fa');
 		$('#market-spn').text('stagione in corso');
