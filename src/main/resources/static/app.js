@@ -540,7 +540,7 @@ function checkOffer(){
 		alert("L'offerta dev'essere maggiore di quella precedente!");
 		return false;
 	}
-	console.log('marketType--->>'+marketType);
+//	console.log('marketType--->>'+marketType);
 	if((marketType != 'M') && !checkCountRole()){
 		return false;
 	}
