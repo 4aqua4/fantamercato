@@ -379,6 +379,8 @@ logger.debug("------------------------------------");
     private void setupStartTurn() {
     	//svuota lista team ritirati
     	quitTeamList = new ArrayList<String>();
+    	//svuota lastBidder
+    	lastBidder = null;
     }
     
     public int nextTurnBeginnerIdx() {
